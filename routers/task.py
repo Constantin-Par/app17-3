@@ -12,25 +12,74 @@ router_task = APIRouter(prefix='/task', tags=['task'])
 
 
 @router_task.get('/')
-async def all_tasks():
-    pass
+async def all_tasks(db: Annotated[Session, Depends(get_db)]):
+    users = db.scalars(select(Task)).all()
+    return users
 
 
 @router_task.get('/task_id')
-async def task_by_id():
-    pass
+async def task_by_id(db: Annotated[Session, Depends(get_db)], task_id: int):
+    task = db.scalar(select(User).where(Task.id == task_id))
+    if task: return task
+    raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Task was not found'
+            )
 
 
 @router_task.post('/create')
-async def create_task():
-    pass
+async def create_task(db: Annotated[Session, Depends(get_db)], user_id: int, create_task: CreateTask):
+    user = db.scalar(select(User).where(User.id == user_id))
+    if user is None:
+        raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='User was not found'
+                )
+    db.execute(insert(Task).values(
+            title=create_task.title,
+            content=create_task.content,
+            priority=create_task.priority,
+            user_id=user_id,
+            slug=slugify(create_task.title),
+            ))
+    db.commit()
+    return {
+            'status_code': status.HTTP_201_CREATED,
+            'transaction': 'Successful'
+            }
 
 
 @router_task.put('/update')
-async def update_task():
-    pass
+async def update_task(db: Annotated[Session, Depends(get_db)], task_id: int, update_task: UpdateTask):
+    task = db.scalar(select(User).where(Task.id == task_id))
+    if task is None:
+        raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='Task was not found'
+                )
+    db.execute(update(Task).where(Task.id == task_id).values(
+            title=update_task.title,
+            firstname=update_task.content,
+            priority=update_task.priority,
+            ))
+    db.commit()
+    return {
+            'status_code': status.HTTP_200_OK,
+            'transaction': 'Task update is successful!'
+            }
 
 
 @router_task.delete('/delete')
-async def delete_task():
-    pass
+async def delete_task(db: Annotated[Session, Depends(get_db)], task_id: int):
+    task = db.scalar(select(Task).where(Task.id == task_id))
+    if task is None:
+        raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='Task was not found'
+                )
+    db.execute(delete(Task).where(Task.id == task_id))
+    db.commit()
+    return {
+            'status_code': status.HTTP_200_OK,
+            'transaction': 'Task delete is successful!'
+            }
