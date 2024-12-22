@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+git_commit.cmd
+git_init.cmd
+git_push.cmd
+requirements.txt
