@@ -15,6 +15,7 @@ app.include_router(router_user)
 # pip install alembic
 # pip install uvicorn
 # pip install fastapi
+# pip install python-slugify
 
 # uvicorn main:app
 # alembic init migrations
